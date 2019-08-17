@@ -6,18 +6,18 @@
 #include "UpdateVersion.h"
 #include "UpdateVersionDlg.h"
 #include "afxdialogex.h"
+#include "DlgSetting.h"
 
-
-#include <string>
 #include <urlmon.h>                 //Needed for the URLDownloadToFile() function
 #pragma comment(lib, "urlmon.lib")  //Needed for the URLDownloadToFile() function
 using namespace std;
+
+CString IniFilePath="D:\\Program Files\\config.ini";   //  使用绝对路径
 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -64,13 +64,16 @@ CUpdateVersionDlg::CUpdateVersionDlg(CWnd* pParent /*=NULL*/)
 void CUpdateVersionDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_FILE, m_listFile);
 }
 
 BEGIN_MESSAGE_MAP(CUpdateVersionDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON1, &CUpdateVersionDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CUpdateVersionDlg::OnBnClickedButtonDownload)
+	ON_BN_CLICKED(IDC_BUTTON_EXIT, &CUpdateVersionDlg::OnBnClickedButtonExit)
+	ON_BN_CLICKED(IDC_BUTTON_SET, &CUpdateVersionDlg::OnBnClickedButtonSet)
 END_MESSAGE_MAP()
 
 
@@ -105,7 +108,53 @@ BOOL CUpdateVersionDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	// [8/17/2019 fdh]  设置list的字体
+	static   CFont   font1;  
+	font1.CreatePointFont(150, _T("微软雅黑"));
+	GetDlgItem(IDC_STATIC_TIP)->SetFont(&font1);
+	GetDlgItem(IDC_LIST_FILE)->SetFont(&font1);
+	font1.Detach();
+	font1.CreatePointFont(150, _T("黑体"));
+	GetDlgItem(IDC_BUTTON_DOWNLOAD)->SetFont(&font1);
+	GetDlgItem(IDC_BUTTON_EXIT)->SetFont(&font1);
+	GetDlgItem(IDC_BUTTON_UPDATE)->SetFont(&font1);
+	GetDlgItem(IDC_BUTTON_REPLACE)->SetFont(&font1);
+
 	// TODO: 在此添加额外的初始化代码
+	//打开一个网址
+	CString info;
+	bool read = ReadHtml("http://fengdh.cn/shared",info);
+	if(read)
+	{
+		//如果读取到了数据
+		//a href="update-1.2.26.6680.exe"
+		//std::regex pattern("a\ href=\"update-[0-9]{1}\.[0-9][1]\.[1-9]{2}\.[0-9]{4}\.exe\"");
+		std::regex pattern("a\ href=\"update-[0-9]{1}.[0-9]{1}.[0-9]{2}.[0-9]{4}.exe\"");
+		std::vector<CString> results;
+		CString tempResult;
+		bool success = GetDataFromHtml(info,pattern,results);
+		if(success)
+		{
+			for (std::vector<CString>::iterator it = results.begin(); it != results.end(); ++it)
+			{
+				tempResult = *it;
+				//截取文件名
+				CString Filename;
+				AfxExtractSubString(Filename,tempResult,1,'=');
+				Filename = Filename.Trim("\"");
+				m_listFile.AddString(Filename);
+			}
+		}
+		else
+		{
+			AfxMessageBox("未找到匹配文件");
+		}
+	}
+	else
+	{
+		AfxMessageBox("网页数据读取失败");
+	}
+
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -160,20 +209,61 @@ HCURSOR CUpdateVersionDlg::OnQueryDragIcon()
 }
 
 
-
-void CUpdateVersionDlg::OnBnClickedButton1()
+void CUpdateVersionDlg::OnBnClickedButtonDownload()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	string url = "http://fengdh.cn/shared/2.gif";
+	int sel;
+	m_listFile.GetCurSel();
+	sel = m_listFile.GetCurSel();
+	if (sel < 0)
+	{
+		AfxMessageBox("你未选中任何文件");
+		return;
+	}
+	else
+	{
+		CString strTmp;
+		m_listFile.GetText(sel,strTmp); //得到当前选择的字符串
+		CString url_file;
 
-	//Convert the string to a LPCSTR type so we can use it in the URLDownloadToFile() function
-	LPCSTR lpcURL = url.c_str();
+		char cMissionPath[200];
 
-	string destination = "C:\\Users\\15076\\Desktop\\2222.gif";
+		GetPrivateProfileString("参数","服务器地址","http://fengdh.cn/shared",cMissionPath,200,IniFilePath);
+		CString s_MissionPath;
+		s_MissionPath.Format("%s",cMissionPath);
+		//url_file.Format("http://fengdh.cn/shared/%s",strTmp);
+		url_file.Format("%s%s",s_MissionPath,strTmp);
 
-	//Convert the string to a LPCSTR type so we can use it in the URLDownloadToFile() function
-	LPCSTR lpcDestination = destination.c_str();
+		GetPrivateProfileString("参数","保存路径","D:\\",cMissionPath,200,IniFilePath);
+		s_MissionPath.Format("%s",cMissionPath);
+	
+		CString s_SavePath;
+		s_SavePath.Format("%s\\%s",cMissionPath,strTmp);
 
-	HRESULT hr = URLDownloadToFile( NULL, lpcURL, lpcDestination, 0, NULL );
+		//Convert the string to a LPCSTR type so we can use it in the URLDownloadToFile() function
+		LPCSTR lpcURL = url_file;
+
+		//string destination = "C:\\Users\\15076\\Desktop\\2222.gif";
+		//Convert the string to a LPCSTR type so we can use it in the URLDownloadToFile() function
+		//LPCSTR lpcDestination = destination.c_str();
+		//HRESULT hr = URLDownloadToFile( NULL, lpcURL, lpcDestination, 0, NULL );
+		HRESULT hr = URLDownloadToFile( NULL, lpcURL, s_SavePath, 0, NULL );
+	}
+	
+}
+
+void CUpdateVersionDlg::OnBnClickedButtonExit()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	PostMessage(WM_QUIT,0,0);//最常用
+}
+
+
+void CUpdateVersionDlg::OnBnClickedButtonSet()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CDlgSetting dlg;
+	dlg.DoModal();
 
 }
+;
