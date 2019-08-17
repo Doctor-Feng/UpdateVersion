@@ -1,4 +1,4 @@
-# pdateVersion  
+# UpdateVersion  
   
 ![版本更新](https://img.shields.io/badge/build-passing-green.svg)
 [![版本更新](https://img.shields.io/badge/release-v1.0.0.1-blue.svg)](https://github.com/Doctor-Feng/UpdateVersion)
@@ -29,7 +29,7 @@ UrlMon.Lib
 ## 软件界面
 
    <figure class="half">
-  
+   <img src="https://github.com/fdh0/files/blob/master/3.gif?raw=true" height="300" title="软件使用">
    <img src="https://github.com/fdh0/files/blob/master/081702.PNG?raw=true" height="300" title="软件主界面">
    <img src="https://github.com/fdh0/files/blob/master/081703.PNG?raw=true" height="300" title="软件设置界面">
 
