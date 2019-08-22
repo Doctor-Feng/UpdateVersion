@@ -74,6 +74,7 @@ BEGIN_MESSAGE_MAP(CUpdateVersionDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &CUpdateVersionDlg::OnBnClickedButtonDownload)
 	ON_BN_CLICKED(IDC_BUTTON_EXIT, &CUpdateVersionDlg::OnBnClickedButtonExit)
 	ON_BN_CLICKED(IDC_BUTTON_SET, &CUpdateVersionDlg::OnBnClickedButtonSet)
+	ON_BN_CLICKED(IDC_BUTTON_REPLACE, &CUpdateVersionDlg::OnBnClickedButtonReplace)
 END_MESSAGE_MAP()
 
 
@@ -129,7 +130,7 @@ BOOL CUpdateVersionDlg::OnInitDialog()
 		//如果读取到了数据
 		//a href="update-1.2.26.6680.exe"
 		//std::regex pattern("a\ href=\"update-[0-9]{1}\.[0-9][1]\.[1-9]{2}\.[0-9]{4}\.exe\"");
-		std::regex pattern("a\ href=\"update-[0-9]{1}.[0-9]{1}.[0-9]{2}.[0-9]{4}.exe\"");
+		std::regex pattern("a\ href=\"upgrade-[0-9]{1}.[0-9]{1}.[0-9]{2}.[0-9]{4}.exe\"");
 		std::vector<CString> results;
 		CString tempResult;
 		bool success = GetDataFromHtml(info,pattern,results);
@@ -267,3 +268,34 @@ void CUpdateVersionDlg::OnBnClickedButtonSet()
 
 }
 ;
+
+void CUpdateVersionDlg::OnBnClickedButtonReplace()
+{
+	// TODO: 更新版本
+	int sel;
+	m_listFile.GetCurSel();
+	sel = m_listFile.GetCurSel();
+	if (sel < 0)
+	{
+		AfxMessageBox("你未选中任何文件");
+		return;
+	}
+	CString strTmp;
+	m_listFile.GetText(sel,strTmp); //得到当前选择的字符串
+	CString url_file;
+
+	char cMissionPath[200];
+	CString s_MissionPath;
+
+	GetPrivateProfileString("参数","保存路径","D:\\",cMissionPath,200,IniFilePath);
+	s_MissionPath.Format("%s",cMissionPath);
+
+	CString s_SavePath;
+	s_SavePath.Format("%s\\%s",cMissionPath,strTmp);
+
+	//Convert the string to a LPCSTR type so we can use it in the URLDownloadToFile() function
+	LPCSTR lpcURL = s_SavePath;
+
+	ShellExecute( GetSafeHwnd(), "open", lpcURL, NULL, NULL, 1 );
+
+}

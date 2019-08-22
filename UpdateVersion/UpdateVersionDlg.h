@@ -73,4 +73,5 @@ public:
 	CListBox m_listFile;
 	afx_msg void OnBnClickedButtonExit();
 	afx_msg void OnBnClickedButtonSet();
+	afx_msg void OnBnClickedButtonReplace();
 };
